@@ -1,5 +1,10 @@
 # Forge - Habit Tracking App
 
+![CI Status](https://img.shields.io/github/actions/workflow/status/username/forge/main?style=flat-square)
+![Version](https://img.shields.io/github/package-json/v/username/forge?style=flat-square)
+![License](https://img.shields.io/github/license/username/forge?style=flat-square)
+![Size](https://img.shields.io/github/repo-size/username/forge?style=flat-square)
+
 A modern, intuitive habit tracking application built with React and Firebase. Forge helps users build and maintain positive habits through a clean interface, daily tracking, and motivational features.
 
 ## 🎯 Business Concept
