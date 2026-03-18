@@ -1,6 +1,6 @@
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
-import { LogOut, Settings, Flame, Sun, Moon } from 'lucide-react'
+import { LogOut, Settings, Flame, Sun, Moon, TrendingUp } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export default function Header() {
@@ -22,6 +22,13 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => navigate('/statistics')}
+            className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
+            title="View Progress"
+          >
+            <TrendingUp className="w-4 h-4" />
+          </button>
           <button
             onClick={toggleTheme}
             className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"

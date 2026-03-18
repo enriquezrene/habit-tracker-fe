@@ -3,6 +3,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  updateProfile,
   signInWithPopup,
   signOut,
 } from 'firebase/auth'
@@ -32,8 +33,13 @@ export function AuthProvider({ children }) {
     return signInWithEmailAndPassword(auth, email, password)
   }
 
-  async function signup(email, password) {
-    return createUserWithEmailAndPassword(auth, email, password)
+  async function signup(email, password, firstName, lastName) {
+    const result = await createUserWithEmailAndPassword(auth, email, password)
+    // Update the user's profile with their display name
+    await updateProfile(result.user, {
+      displayName: `${firstName} ${lastName}`.trim()
+    })
+    return result
   }
 
   async function loginWithGoogle() {

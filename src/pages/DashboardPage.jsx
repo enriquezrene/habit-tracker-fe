@@ -2,6 +2,20 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { format, addDays, subDays } from 'date-fns'
 import { Plus } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
 import { useAuth } from '../contexts/AuthContext'
 import {
   getHabits,
@@ -11,10 +25,11 @@ import {
   getCompletionsForDate,
   getDailyCompletionStats,
   getUserSettings,
+  reorderHabits,
 } from '../lib/habits'
 import { scheduleNotifications, clearAllNotifications } from '../lib/notifications'
 import DateNavigator from '../components/habits/DateNavigator'
-import HabitItem from '../components/habits/HabitItem'
+import DraggableHabitItem from '../components/habits/DraggableHabitItem'
 import CreateHabitModal from '../components/habits/CreateHabitModal'
 import DailyStats from '../components/habits/WeeklyStats'
 import CelebrationOverlay from '../components/habits/CelebrationOverlay'
@@ -41,6 +56,14 @@ export default function DashboardPage() {
   const completionsRef = useRef(new Set())
 
   const dateStr = format(selectedDate, 'yyyy-MM-dd')
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   const loadData = useCallback(async () => {
     if (!user) return
@@ -127,6 +150,31 @@ export default function DashboardPage() {
     setDailyStats(getDailyCompletionStats(remainingHabits, updatedCompletions))
   }
 
+  async function handleDragEnd(event) {
+    const { active, over } = event
+
+    if (active.id !== over.id) {
+      const oldIndex = habits.findIndex((habit) => habit.id === active.id)
+      const newIndex = habits.findIndex((habit) => habit.id === over.id)
+
+      const newHabits = arrayMove(habits, oldIndex, newIndex)
+      setHabits(newHabits)
+      habitsRef.current = newHabits
+
+      // Update order in Firebase
+      const habitIds = newHabits.map((h) => h.id)
+      try {
+        await reorderHabits(user.uid, habitIds)
+        toast.success('Habits reordered')
+      } catch (error) {
+        toast.error('Failed to reorder habits')
+        // Revert to original order if failed
+        setHabits(habits)
+        habitsRef.current = habits
+      }
+    }
+  }
+
   const habitCounts = habits.reduce((acc, h) => {
     acc[h.category] = (acc[h.category] || 0) + 1
     return acc
@@ -162,19 +210,27 @@ export default function DashboardPage() {
       />
 
       {/* Habits List */}
-      <div className="space-y-2">
-        <AnimatePresence mode="popLayout">
-          {habits.map((habit) => (
-            <HabitItem
-              key={habit.id}
-              habit={habit}
-              completed={completions.has(habit.id)}
-              onToggle={() => handleToggle(habit.id)}
-              onDelete={() => handleDelete(habit.id)}
-            />
-          ))}
-        </AnimatePresence>
-      </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={habits} strategy={verticalListSortingStrategy}>
+          <div className="space-y-2">
+            <AnimatePresence mode="popLayout">
+              {habits.map((habit) => (
+                <DraggableHabitItem
+                  key={habit.id}
+                  habit={habit}
+                  completed={completions.has(habit.id)}
+                  onToggle={() => handleToggle(habit.id)}
+                  onDelete={() => handleDelete(habit.id)}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Add Button */}
       <Button onClick={() => setModalOpen(true)} className="w-full flex items-center justify-center gap-2">

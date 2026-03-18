@@ -11,6 +11,8 @@ export default function LoginPage() {
   const [isSignup, setIsSignup] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login, signup, loginWithGoogle } = useAuth()
@@ -26,9 +28,33 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
 
+    // Validation for signup
+    if (isSignup) {
+      if (!firstName.trim()) {
+        setError('First name is required.')
+        setLoading(false)
+        return
+      }
+      if (!lastName.trim()) {
+        setError('Last name is required.')
+        setLoading(false)
+        return
+      }
+      if (firstName.trim().length < 2) {
+        setError('First name must be at least 2 characters.')
+        setLoading(false)
+        return
+      }
+      if (lastName.trim().length < 2) {
+        setError('Last name must be at least 2 characters.')
+        setLoading(false)
+        return
+      }
+    }
+
     try {
       if (isSignup) {
-        await signup(email, password)
+        await signup(email, password, firstName.trim(), lastName.trim())
       } else {
         await login(email, password)
       }
@@ -67,9 +93,17 @@ export default function LoginPage() {
         {/* Logo & Quote */}
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-2 mb-6">
-            <Flame className="w-8 h-8 text-orange-500" />
-            <h1 className="text-3xl font-bold tracking-tight">Forge</h1>
+            <Flame className={`w-8 h-8 ${isSignup ? 'text-blue-500' : 'text-orange-500'}`} />
+            <h1 className="text-3xl font-bold tracking-tight">
+              {isSignup ? 'Join Forge' : 'Forge'}
+            </h1>
           </div>
+          
+          <p className={`text-sm mb-4 ${isSignup ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400'}`}>
+            {isSignup 
+              ? 'Start building better habits today' 
+              : 'Welcome back! Continue your journey'}
+          </p>
 
           <motion.blockquote
             initial={{ opacity: 0 }}
@@ -86,6 +120,28 @@ export default function LoginPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {isSignup && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="First Name"
+                  type="text"
+                  placeholder="John"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
+                <Input
+                  label="Last Name"
+                  type="text"
+                  placeholder="Doe"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
+              </div>
+            </>
+          )}
           <Input
             label="Email"
             type="email"
@@ -141,7 +197,12 @@ export default function LoginPage() {
         <p className="text-center text-sm text-zinc-500 mt-6">
           {isSignup ? 'Already have an account?' : "Don't have an account?"}{' '}
           <button
-            onClick={() => { setIsSignup(!isSignup); setError('') }}
+            onClick={() => { 
+              setIsSignup(!isSignup); 
+              setError('');
+              setFirstName('');
+              setLastName('');
+            }}
             className="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 font-medium cursor-pointer"
           >
             {isSignup ? 'Sign In' : 'Sign Up'}
